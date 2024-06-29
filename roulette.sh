@@ -88,8 +88,90 @@ function martinGala(){
 }
 
 inverseLabrouchere(){
-  echo -e "Playing inverseLabrouchere"
+
+  echo -e "\n${yellowColour}[+]${endColour} ${grayColour}Current money:${endColour} ${blueColour}$money\$${endColour}"
+  echo -ne "${yellowColour}[+]${endColour} ${grayColour}What do you want to bet continuosly (even/odd)? -> ${endColour}" && read odd_even
+
+  initial_bet=$money
+
+  declare -a my_sequence=(1 2 3 4)
+  declare -a backup_sequence=(${my_sequence[@]})
+  echo -e "\n${yellowColour}[+]${endColour} ${grayColour}We start with the sequence${endColour} ${purpleColour}[${my_sequence[@]}]${endColour}"
+  
+  bet=$((${my_sequence[0]}+${my_sequence[-1]}))
+  
+
+  tput civis
+
+  while true; do
+    random_number=$(($RANDOM % 37))
+    let money-=$bet
+
+    echo -e "\n${yellowColour}[+]${endColour} ${grayColour}The bet is: ${endColour}${blueColour}$bet\$${endColour}"
+    echo -e "${yellowColour}[+]${endColour} ${grayColour}Current money:${endColour} ${blueColour}$money\$${endColour}"
+    echo -e "\n${yellowColour}[+]${endColour} ${grayColour}Random number: ${endColour}${yellowColour}$random_number${endColour}"
+
+
+    if [[ "$random_number" -ne 0 ]] && { { [[ "$(($random_number % 2))" -eq 0 ]] && [[ "$odd_even" == "even" ]]; } || { [[ "$(($random_number % 2))" -eq 1 ]] && [[ "$odd_even" == "odd" ]]; }; }; then
+      echo -e "\n${yellowColour}[+]${endColour} ${greenColour}You won!${endColour}"
+      reward=$(($bet*2))
+      let money+=$reward
+      echo -e "${yellowColour}[+]${endColour} ${grayColour}Now you have${endColour} ${blueColour}$money\$${endColour}"
+      
+      if [ "$money" -ge "$(($initial_bet+50))" ]; then
+        my_sequence=(${backup_sequence[@]})
+        echo -e "${yellowColour}[+]${endColour} ${turquoiseColour}You won 50\$ or more. The new sequence is${endColour} ${purpleColour}[${my_sequence[@]}]${endColour}"
+        initial_bet=$money
+      else
+        my_sequence+=($bet)
+        my_sequence=(${my_sequence[@]})
+        echo -e "${yellowColour}[+]${endColour} ${grayColour}The new sequence is:${endColour} ${purpleColour}[${my_sequence[@]}]${endColour}"
+
+
+      fi
+
+      if [ "${#my_sequence[@]}" -gt 1 ]; then
+        bet=$((${my_sequence[0]}+${my_sequence[-1]}))
+      elif [ "${#my_sequence[@]}" -eq 1 ];then
+        bet=$((${my_sequence[0]}))
+      fi
+
+
+    else
+      echo -e "\n${redColour}[!] You Lost!${endColour}"
+      
+      echo -e "${yellowColour}[+]${endColour} ${grayColour}Your current money is:${endColour} ${blueColour}$money\$${endColour}"
+      
+      unset my_sequence[0]
+      unset my_sequence[-1] 2>/dev/null
+      my_sequence=(${my_sequence[@]})
+      echo -e "${yellowColour}[+]${endColour} ${grayColour}Now the sequence is${endColour} ${purpleColour}[${my_sequence[@]}]${endColour}"
+
+      if [ "${#my_sequence[@]}" -gt 1 ]; then
+        bet=$((${my_sequence[0]}+${my_sequence[-1]}))
+      elif [ "${#my_sequence[@]}" -eq 1 ];then
+        bet=$((${my_sequence[0]}))
+      else 
+        echo -e "${redColour}[!] The sequence is dead${endColour}"
+        my_sequence=(${backup_sequence[@]})
+        echo -e "${yellowColour}[+]${endColour} ${grayColour}Now the sequence is${endColour} ${purpleColour}[${my_sequence[@]}]${endColour}"
+        bet=$((${my_sequence[0]}+${my_sequence[-1]}))
+      fi
+    fi
+
+    if [ "$money" -le 0 ]; then
+      echo -e "${redcolour}[!] You ran out of money${endColour}"
+      tput cnorm && exit 1
+    fi
+    sleep 0.5
+  done
+
+  tput cnorm
+
 }
+
+
+
 while getopts "m:t:h" arg ; do
   case $arg in 
     m) money=$OPTARG;;
